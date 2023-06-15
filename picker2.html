@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0">
+<title>Picker</title>
+<style>
+body {
+    background:#FFF;
+    color:#000;
+    font-family:verdana, sans-serif;
+    font-size:10pt;
+    margin:0;
+    padding:10px;
+}
+
+a:link, a:visited {
+    color:#008;
+    font-weight:bold;
+    text-decoration:none;
+}
+
+a:active, a:hover {
+    color:#ACF;
+}
+
+.info {
+    font-weight:bold;
+}
+
+button {
+    font-family:inherit;
+    cursor:pointer;
+    border:0;
+    border-radius:3px;
+    padding:0.3em 0.5em;
+    background:#DDD;
+    color:#000;
+}
+
+button:hover {
+    background:#CCC;
+}
+
+button.disabled {
+    background:#DDD;
+    color:#888;
+    cursor:not-allowed;
+}
+
+button.disabled:hover {
+    background:#DDD;
+}
+
+#container {
+    position:relative;
+    margin-left:-10px;
+    margin-right:-10px;
+    padding:10px;
+    overflow:hidden;
+}
+
+@media (min-width:1024px) {
+    /* Put the found favorites beside the picking div when the window is sufficiently large */
+    #picking {
+        float:left;
+        width:636px;
+    }
+
+    #secondary {
+        margin-left:646px;
+    }
+}
+
+@media (min-width:1300px) {
+    /* Once we get to the point where 636px is less than half of the width of the screen, make the picking div just take up half */
+    #picking {
+        width:50%;
+    }
+
+    #secondary {
+        margin-left:51%;
+    }
+}
+
+#pick {
+    background:#58F;
+    color:#FFF;
+    font-size:larger;
+    font-weight:bold;
+    width:6em;
+    border-radius:5px;
+    margin-right:10px;
+}
+
+#pick.disabled {
+    background:#ACF;
+}
+
+#pick:hover {
+    background:#ACF;
+}
+
+.item-list {
+    padding:0;
+    list-style-type:none;
+    line-height:100px;
+}
+
+.item-list li {
+    margin:0;
+    display:inline-block;
+    height:100px;
+    width:100px;
+    line-height:100px;
+    border:3px solid transparent;
+    text-align:center;
+    position:relative;
+    vertical-align:top;
+    overflow:hidden;
+    border-radius:100%;
+    background:#F7F7F7;
+    color:#000;
+}
+
+.item-list li img {
+    vertical-align:middle;
+    max-height:100%;
+    max-width:100%;
+}
+
+.item-list li span {
+    display:inline-block;
+    vertical-align:middle;
+    line-height:1.2;
+}
+
+@media (max-width:636px) {
+    .item-list {
+        line-height:75px;
+    }
+
+    .item-list li {
+        line-height:75px;
+        height:75px;
+        width:75px;
+    }
+}
+
+@media (max-width:423px) {
+    .item-list {
+        line-height:50px;
+    }
+
+    .item-list li {
+        line-height:50px;
+        height:50px;
+        width:50px;
+    }
+}
+
+#evaluating li {
+    cursor:pointer;
+}
+
+#favorites li {
+    cursor:move;
+}
+
+.item-list li:hover {
+    background:#800;
+}
+
+.item-list.sorting li:hover {
+    background:#F7F7F7;
+}
+
+#evaluating li.selected {
+    border:4px solid #F00;
+}
+
+#evaluating, #buttons {
+    text-align:center;
+    margin:auto;
+}
+
+#evaluating li.notice {
+    width:auto;
+    height:auto;
+    max-width:260px;
+    margin:auto;
+    background:#F7F7F7;
+    border-radius:10px;
+    padding:30px 30px;
+    color:#000;
+    text-align:center;
+    line-height:1.4;
+    cursor:auto;
+    font-size:10pt;
+}
+
+#buttons {
+    margin-top:30px;
+    position:relative;
+    z-index:3;
+}
+</style>
+</head>
+<body>
+<h1>jeks fave maimai picker</h1>
+
+<p>u can pick multiple charts u like per round. ones u pick will continue whilst ones not will be eliminated.</p>
+<p>if youre also unsure of the charts jacket, you can hover over the img to get the chart name.</p>
+<p>*note*: when excluding charts, the highest difficulty lvl of the chart will be used as the exclusion parameter</p>
+
+<div id="container">
+
+<div id="picking">
+<ul id="evaluating" class="item-list">
+</ul>
+
+<p id="buttons"><button id="pick">Pick</button> <button id="pass">Pass</button> <button id="undo">Undo</button> <button id="redo">Redo</button> <button id="reset">Reset</button> <button id="spare_button">spare button</button></p>
+</div>
+
+<style>
+  p {
+    font-size: 1.2em;
+  }
+  label {
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-right: 10px;
+  }
+  input[type="checkbox"] {
+    transform: scale(1.5);
+    margin-right: 5px;
+  }
+</style>
+<p>
+  <strong style="color: crimson;">Excluded levels:</strong>
+  <label><input type="checkbox" name="levels" class="levels" value="15"> 15</label>
+  <label><input type="checkbox" name="levels" class="levels" value="14+"> 14+</label>
+  <label><input type="checkbox" name="levels" class="levels" value="14"> 14</label>
+  <label><input type="checkbox" name="levels" class="levels" value="13+"> 13+</label>
+</p>
+
+
+<div id="secondary">
+<h2>Found favorites</h2>
+
+<ol id="favorites" class="item-list">
+</ol>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<script src="picker.js"></script>
+<script src="picker-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.7.0/Sortable.min.js"></script>
+<script>
+'use strict';
+
+
+var items = [
+    {id: 'PANDORA PARADOXXX', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118311443838812210/658fe4921a6bcfff951cbd362636a6970d5bbb1df0587ac7819dcccb962c9bd6.png', level: '15'},
+    {id: 'In Chaos', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118316323261403186/704d8f68917a041a526b8055b669145d7a28289a84da0b2ad03b4543fd83d7b8.png', level: '14+'},
+    {id: 'ジングルベル', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118316323534024774/671128a0c103a5de70afc3d6a4eeb123d3afb4d79ef092de0022bba4543efd68.png', level: '14+'},
+    {id: 'Garakuta Doll Play', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118318884500553778/2fd925d0bc0256851e1c4c80354c792af803f98e057c95972873b5dd352b6a8f.png', level: '14+'},
+    {id: 'ガラテアの螺旋', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118319166869471252/07e161bff23fbc8b4ac37d85ce3865d1e291ed0258b7646ab7ef128b86efee30.png', level: '14+'},
+    {id: 'Glorious Crown', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118319281445277806/86732af137675c3d9cb03d1f28434cd35acbfaa50b3bb91fb3e7ad1e2ce76dbc.png', level: '14+'},
+    {id: 'AMAZING MIGHTYYYY!!!!', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118321014275846345/de160cdc21de9c124db1c597dbfd8719d1365e2013e70d4a70132d15b3b845c0.png', level: '14+'},
+    {id: 'Our Wrenally', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118321014590427197/2929c99b7452b49d13dfdfc10039d58958bd0b5d8a6ba753bf58d63cdc0727bb.png', level: '14+'},
+    {id: 'Excalibur ～Revived resolution～', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118321015769010196/df13eb4fceaecd5331a06f4f4635d3c39583cb9ed1b4ab2e0d51033ddc427901.png', level: '14+'},
+    {id: 'larva', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118323134328741929/8fb917562717e828f1d59a62854c7f1ab8041d8347c3ad7fa9473e562be42db8.png', level: '14+'},
+    {id: 'SILENT BLUE', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118324085282324541/22c704ba6e8cf035418f7c388db708549ec8533429d093bf535402dc25edbf63.png', level: '14+'},
+    {id: '怒槌怒槌', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118324868061081761/9b8399fb23de7511b3f89aaa56041ed4d64e535c314d4b2c324f9c0ad9506b37.png', level: '14+'},
+    {id: 'End Time', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118326489256034374/619d0165272c6dac33ce810b624e95aa3c83abbd5ef9eecc2e960812a6197498.png', level: '14+'},
+    {id: 'QZKago Requiem', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118311958920314960/8c0ee3f6c7b7fd3e9eb0e0e2da4e3b979f1dcda4aaeacf37f00fee46bdcc67f3.png', level: '14+'},
+    {id: 'Schwarzschild', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118328173789200414/fb6e02b14a9e8ff1012842c6acd7ec9be6e0765272e53364742d27b9f8d38e3c.png', level: '14+'},
+    {id: 'Alea jacta est!', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118335758529462292/cf885f0760a8e67a942c27861bc7c815f697ab81d47fe9f7f3038a3421ef99aa.png', level: '14+'},
+    {id: '雷切-RAIKIRI-', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118335778657947658/b08f4cf2f0154fb212a8ca33b6e7b2eb6b356f9e2762c91e9a71ead102b568bf.png', level: '14+'},
+    {id: 'the EmpErroR', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118335799201640629/1f883e9ec6a96a009ab523e14e02aad9a9ed809773f65df73ed0d10f5df26c09.png', level: '14+'},
+    {id: 'TEmPTaTiON', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118335824178720809/741df965f9a59341de3aa27702e4873fc4ff9043dfba060e3b63f887894541c1.png', level: '14+'},
+    {id: 'Valsqotch', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118335876393615461/c1a833193d2bd766bd882de5b4b77e508d3f622bc6c1a58117a0bd4494d0d884.png', level: '14+'},
+    {id: '封焔の135秒', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118335896941506681/5651cbc4bb9d223a40c717f1216f7bad9fba13e36b7a0d1fff0510ae817e9ca5.png', level: '14+'},
+    {id: 'Regulus', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118336590083792976/492978e5988cc3472a5c2d3335de8908561fc8c1fc061f8740ba0090712602e8.png', level: '14+'},
+    {id: 'BREaK! BREaK! BREaK!', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118338432620572702/4f9500cbc714e859a617ed06238916752a145271132d6199e7c0053b5b7b4146.png', level: '14+'},
+    {id: 'Heavenly Blast', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118338450865803364/9ba5a03cb42c0301391d857d90fd71214a737acd270a7364ed8496f17e732b49.png', level: '14+'},
+    {id: 'Lia=Fail', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118338481341612102/a54027bec4f1041b6c7c19e99de2fe9cc3d467ee359279e68e6385205fe63f69.png', level: '14+'},
+    {id: '躯樹の墓守', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118338486639014009/cfccaaead0eb345bdf04e6f38736544b1b2e923a9838c72a297c1720429e059c.png', level: '14+'},
+    {id: 'GIGANTØMAKHIA', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118338503076483143/52bbefcc74a8add49ea60516c3ee3e6212190c90c6401c6f64476a36d9f5387e.png', level: '14+'},
+    {id: 'sølips', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118338520981983253/ab96a53a18484da4921aaff847cabde82c8692d7c5f0c0986f50635a15194649.png', level: '14+'},
+    {id: 'チューリングの跡', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118339223301402726/9c5fdab71b0c6b3f056ecbcbc48cd17f44daee52d982d0adf406a64cbbca2716.png', level: '14+'},
+    {id: 'WiPE OUT MEMORIES', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118339313457975316/a2e06a1173804eb3b13d1c96e73460e94164e53240796f636b3d6095fb0f5845.png', level: '14+'},
+    {id: 'Worlds end loneliness', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118339350233624626/3d991cd7ae8acd4b4a6144d797637f381ab5bd7fe185f78ec6561e56360a7aa7.png', level: '14+'},
+    {id: 'VIIIbit Explorer', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118339369300918273/2b1920f465b6732e3b6bc08e709e032ca330f06dfb6d1642a931dde271954067.png', level: '14+'},
+    {id: '康莊大道', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118339387848134766/6c771f150d74292148ccc4487dba1036d6343fa86748f347e0b7931eda1fb660.png', level: '14+'},
+    {id: 'ViRTUS', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118339401945198714/5737b4ed2d71b1060410769bb4894d7397c25820bcbb6f6fb6ef795e63e99381.png', level: '14+'},
+    {id: 'VeRForTe αRtE:VEiN', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118339424686723072/4f14bfe18abbf6497522fb5f1de3374ef8397a0f5bb2597c0d41399287439754.png', level: '14'},
+    {id: '源平大戦絵巻テーマソング', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118362345253634138/f3cd18713b04f55c21016495100937bec0b7220b30387bd3782390757812c037.png', level: '14'},
+    {id: 'Beat Of Mind', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118362369266044979/96246c9fe1f280ed589042129b57eca5b1523781f61de4100f338cc91f015e2f.png', level: '14'},
+    {id: 'Fragrance', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118362389415469147/0ecab941e218b4f8828451af340524a74fb786e9f65d2122eafcec15cc658db4.png', level: '14'},
+    {id: 'ナイト・オブ・ナイツ', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118362481958592612/a9ecc1e80667056bc5cbb75e81923782746a5a83aaef06242b2a1770c35c1e63.png', level: '14'},
+    {id: '記憶、記録', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118362514460246036/3cce017c2fed74309256a3b3f13e4788a383736d28d5112a90178f4ad2b8abb3.png', level: '14'},
+    {id: 'Beat of getting entangled', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118362529769455696/613f42e31298545c27f2ac9ba3f81d877a13401c03f7ea1fc2faf5c7cbe1bb5d.png', level: '14'},
+    {id: 'Death Scythe', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118362548719329280/8cccf9898f16f827eb0c419df0982b13b1b1a2846d38d45b89f2e3ec0c0198d2.png', level: '14'},
+    {id: 'System Z', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118362565051961344/8b3292764265e4742752625340e8a72348dc3ef4e99894e6a360ecd27969398c.png', level: '14'},
+    {id: 'MYTHOS', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118363989865414676/d1759073b8ff47cbb1ac00b7a3fb4d0c7c06fcc338671a19362fdcd00510bd1d.png', level: '14'},
+    {id: '火炎地獄', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118364003861798922/627593efd5b676fb993a7390c816b23eabdcbe32719d3f37da7230016d5ed07e.png', level: '14'},
+    {id: 'きたさいたま2000', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118364035331674232/8f925c357cf40d1b17b9c3d6b195f50f97f66ed7a793d8117fd71a38a147487c.png', level: '14'},
+    {id: 'FLOWER', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118364049739104276/da91c79222faa000bc23e5f2d1f02fbf2627981b3ef559164bcefe609e9c0a35.png', level: '14'},
+    {id: 'VERTeX', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118364065765543946/78a076f279af1be59ce85508cfff1397ac66cd4139b9189481d7dbe852baf1a6.png', level: '14'},
+    {id: 'Ignis Danse', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118364077480218704/eee51f837da9a38075824a55c9b213f5f6902dd5092b581a41b97edecb12bb23.png', level: '14'},
+    {id: 'FUJIN Rumble', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118367036117110876/004479a6ef2fec8718f8c1ce3e5785c29b687862128baa216d446ce9e05023b6.png', level: '14'},
+    {id: 'Dragoon', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118369124259725332/434dc1342db00b19ce5963c43f1c8234b0bb77d20bf951978a79089cb2b28e97.png', level: '14'},
+    {id: 'Caliburne ～Story of the Legendary sword～', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118367062939684906/9b5077aa1296855dd87961ca3e8b5d3e2508725c56c2f6a7cf93b8b2ab50f45b.png', level: '14'},
+    {id: 'ロストワンの号哭', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118367099283308684/c299f1dea4115d6106b5e5b4433be3506680c727f029b0e10706af1311ba4a83.png', level: '14'},
+    {id: 'Oshama Scramble!', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118367171614093352/bc7cd87b2a854f63049f834d7ecd9733724424188dc1dae53b33234c70d585b1.png', level: '14'},
+    {id: 'Aiolos', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118367194506612838/1a95069d603925739cbd7d014ba13f582771713ce0158701493b43f0dab4f860.png', level: '14'},
+    {id: 'Axeria', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118367214198849677/43a86d80f379804a7c04a39f5c08fafe16c3e915767f04d1abac59ccab556dda.png', level: '14'},
+    {id: 'Revive The Rave', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118370207640076298/e2ca2f1853a16d4ab25d67784af8692e0737d8b0af5f15fad4f9edc17f779489.png', level: '14'},
+    {id: '7thSense', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118370220105543690/4f7d9ec836d61addbbc5a26c8a3f03e17fd91ad5c06711981dc54b1e04b2e932.png', level: '14'},
+    {id: 'Contrapasso -paradiso-', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118370230213824654/727ef246ec32c604d22d9358f358194ddfd8dc44f87de2e77bcaee8e7db96448.png', level: '14'},
+    {id: 'CITRUS MONSTER', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118370260261806151/e0d4065eac9bda002310933ad04e3378e141fda3ddf5fd70f1d2a0b8f694d9b4.png', level: '14'},
+    {id: 'Prophesy One', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118370278922256474/8e37cad533ffc4b85c31f2b4f5ec651ac1648aef768ec24d28c7a76fe822f574.png', level: '14'},
+    {id: 'conflict', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118372174743482468/ad00d95b400d16ac7bdd65b7ab4772051bbd0e4bcd6f4738ab1434901aac6347.png', level: '14'},
+    {id: 'HERA', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118372184230993981/c8f70548b764a923f9c07b0457d87a286170a5be6d3a2c524de6723e0d0e9561.png', level: '14'},
+    {id: 'Lividi', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118372190878961754/22884dde4e0926f82aec00942aca61b134bd7c3894eadedcbf1ac9636de5328f.png', level: '14'},
+    {id: 'ねぇ、壊れタ人形ハ何処へ棄テらレるノ？', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118372215080103946/cbe42455075460ba27ef54231732903147d12b0ba82a9bee6de8520a23686393.png', level: '14'},
+    {id: 'Panopticon', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118372260546355300/2c34e6ecd46d18ba5b392a7c4030623f02c55611a8aea37ac5f80c96be12232c.png', level: '14'},
+    {id: 'Ultranova', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118372274760855552/2968bde714dd5de5a8c0a0caaa22128006abf51ddc7ed72df7214481123094db.png', level: '14'},
+    {id: 'Moon of Noon', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118372289826787359/51323f3bc8073d991fca4bb8c78c21eaff445cd57d7e2971d8112820fe93656e.png', level: '14'},
+    {id: 'Calamity Fortune', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118538814575611985/84e1340f3193eeef9dd152ebc9ed324e4c23471a9608653bca5f7cbd76665e3f.png', level: '14'},
+    {id: '麒麟', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118372353731203082/b3835a12ab7ec04f9f4f38a383aea500459466e51b05209d550dbcce5824d971.png', level: '14'},
+    {id: 'Credits', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118372393610645515/177fc4e51b5a3c71825f8a207b56dcd85ad400ef35da941d192c1454fd18e70f.png', level: '14'},
+    {id: 'エンドマークに希望と涙を添えて', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118372413571338331/07aa6858d07c8011b0e8a5e90e04b38f97af727102708c8fc1ec96306fb74ba2.png', level: '14'},
+    {id: 'World Vanquisher', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118372429102854194/739c9134f70f49dc86e57cb52d8aaae78abdf8e4a7343bf426752651e5a05e18.png', level: '14'},
+    {id: '初音ミクの激唱', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705001045442640/3d8d1dd48b27fbf3c2924e1047ad52fe2d4239d36355b823e067acf46c90578b.png', level: '14'},
+    {id: 'Xevel', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705001372594286/aca41bbc5e8874a347207065533971a2652e9d0217e377c54eaa4d118d69d396.png', level: '14'},
+    {id: 'Ragnarok', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705033261895790/055474e5d50fe33a286f7e7c9b4d85f5e3f388bd7c1a6040a3fbac2b567d033d.png', level: '14'},
+    {id: 'FREEDOM DiVE (tpz Overcute Remix)', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705058981363742/02c941820e6430fa0587589c62a97d17bd266e7c7533850767894434f54c24bd.png', level: '14'},
+    {id: '花と、雪と、ドラムンベース。', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705079948677191/2b9ee0b6ea8fef773725b8ae8832cd6a8c1676669408f689b0698939d89ad81b.png', level: '14'},
+    {id: '極圏', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705102136549387/8173619680c5e0a2962f043d26fc1e17b2812b232ca080241c6aba04c1a7da2a.png', level: '14'},
+    {id: 'Scarlet Lance', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705130292904017/947ddb753cf8501b8273e2dd5dc4239130df53b8998a4a99e5fbde5e39e6c3ac.png', level: '14'},
+    {id: 'TiamaT:F minor', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705150610120764/44e10fa8bd28d77c37bb556f032c6b372402c537044c0506ba4387c6017fe2b4.png', level: '14'},
+    {id: 'B.M.S.', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705176249897070/a976f30250a36aa1eaaddd1e275988dc1cb730904cebcd5e2d6eef308d466216.png', level: '14'},
+    {id: 'FFT', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705265043329045/5c8fc242ab90ff214120f0d5927c9e64f05b92cc9db3d950a69891317bbe36f9.png', level: '14'},
+    {id: 'MAXRAGE', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705297595318393/3d63e8574fb1ce6b571cbc21bb14c980a24738e0f36e109a1fe5ac8c46b917bc.png', level: '14'},
+    {id: 'バーチャルダム　ネーション', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705319464411146/4725fd0a1119bf56e0f3141058148e24bd73c8721a96cb2677786176d8f87aab.png', level: '14'},
+    {id: 'Blows Up Everything', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705344550547516/87f68309e3a18c9fceb1c009583ca02243b9261acc33ce9745b9a79d5af98a86.png', level: '14'},
+    {id: 'Now or Never', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705369821237258/0cb730e9fc36d1ad9b4eb83fa756b84835f3a37aa3facac4cac285c0a3294dfd.png', level: '14'},
+    {id: 'Titania', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705390037782538/4cdbcbcc1093bef62819793507db3757c3fd48a0c56bcfadd0baeffa1ec77f5a.png', level: '14'},
+    {id: 'アポカリプスに反逆の焔を焚べろ', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705413920129184/11364aeccd394c4dfb26114157f8638765cd6c55ca2456db938767ef18e2c2cf.png', level: '14'},
+    {id: 'UniTas', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705438557483018/1b6fa9cfc73a16dc267429dd150407ea4d440071edbe750711f6d6c9c05864e1.png', level: '14'},
+    {id: 'STEEL TRANSONIC', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705668027846766/fbed0027cc902c3ee3417596d041727fc84c848e2d920c8b7a5ef61789d55374.png', level: '14'},
+    {id: 'Maboroshi', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705677947392030/4c891fd1abc9b728df7a38a4c67e18e459ed87bc0bcc1f0c0fd1cd75ab2097d6.png', level: '14'},
+    {id: '渦状銀河のシンフォニエッタ', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705704556048414/1cf8ab2e8f094a454cd5c69c9ff6d2ef7e99770b0be8148158b3982450401396.png', level: '14'},
+    {id: 'ARAIS', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705724655145060/58d17025b3ec3f7597c3938f24db34d4f0d6ef0c6ae8469d8e92938fcd1e5c2c.png', level: '14'},
+    {id: 'BATTLE NO.1', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118705757366530088/a413d7183f0df7df05c23d504baf27adf67fc0f4b53620093d1ef0973f9738f9.png', level: '14'},
+    {id: 'Sqlupp Camellias "Sqleipd Hiytex Remix', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706012019503114/2fd726ca3fa377be50907588ac592eac6fc1f0b8a300915de78e013046c7f2ac.png', level: '14'},
+    {id: 'felys -final remix-', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706342941704222/9c1f149b62ab6a5313a413b0e97132b04b5507d244ba6c5fd94fe3dc8f41a281.png', level: '14'},
+    {id: '≠彡"/了→', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706365913911336/2cd36cab260aae1c5fdb71b054e92a99ecdb8c1e083bd4a0ea66632145ec6177.png', level: '14'},
+    {id: 'Mutation', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706390609952859/00f50800efab0d383829b34b46ae7e4f59942e4f6f54dadbfa8e2e0e6d67452b.png', level: '14'},
+    {id: 'YURUSHITE', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706423065481227/dff3cceaa23397597e37e9395162e77e7c30ef8fe802216119ef1d8a28003b74.png', level: '14'},
+    {id: 'Climax', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706451964248125/53505cce8a6282ef54ae3b7e005d5f83da53bde161bd04dcc35edc393cae5522.png', level: '14'},
+    {id: 'Grievous Lady', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706470335295508/31ac770f045a51cc274a65b9f29488deba2e71acdd414fc24045ae8d34b9f736.png', level: '14'},
+    {id: 'BIRTH', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706490505695403/66a08e0f1c413f46a55710d6d49d1597b7a3400372c88b120ab743d41eb78931.png', level: '14'},
+    {id: 'Desperado Waltz', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706515004637184/56093588350f227ffa29ef713230d9b53020fb433f7f9bd93276c219a593ad37.png', level: '14'},
+    {id: 'Xenovcipher', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706537683222568/3e10317281b4a1118df79bc5ea322ebb159a168e522b58034128fb4368ff49d9.png', level: '14'},
+    {id: 'Re：End of a Dream', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706560248582245/6edff32d63ce43edab1eb3a8d3a78c5438250314acb4e8a6a135de7821cb8756.png', level: '14'},
+    {id: 'CO5M1C R4ILR0AD', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706586240692294/bb375466af93f4c9ea79d708204eecdd7bab87ed50efb371c1793ec80338017d.png', level: '14'},
+    {id: 'チエルカ／エソテリカ', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706795242864700/35c25daec9ad947444b55005ee3ec1c73230357e2904b3e6194f623155c39d07.png', level: '14'},
+    {id: 'AMABIE', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706888649998426/3e999dcebd1b2eb877944b7a312c845bcd70750e819f844e95ec1907916b8e4a.png', level: '14'},
+    {id: 'Starry Colors', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706918278582363/8e971823bbb151458c778cc38efa74be319be1710457547f1f54f43cd58e2814.png', level: '14'},
+    {id: 'ほしぞらスペクタクル', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706943704440913/0aad1815e3ded98572b433a214f2189c844bf9224ee6a384f7fd9d44f32b1012.png', level: '14'},
+    {id: 'MEGATON BLAST', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706960460697681/7242c25b5ee7af0748ed7ee0c5b4346591ae9e01a350a6ae899fde71755c024a.png', level: '14'},
+    {id: '宿星審判', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118706979829981215/2de78b437312cee6fce9e393b0e9546a074a199e8fe8ce545fd8ac86f7c58219.png', level: '14'},
+    {id: '脳天直撃', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118707030623014912/d9abaedc304301e85982f575c55593724090f2046fb3a3527a502039b5cef755.png', level: '14'},
+    {id: 'NAGAREBOSHI☆ROCKET', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118707055008677938/b80fc2a93fafd0af5bd2d34b1177ee9fa857ebf29d10f9a0c717157238485115.png', level: '14'},
+    {id: 'デッドマンズバラッド', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118707080497475714/0b9d1d28767d8cec362444f2441367bba8f04af1955c7dea86f130a8f5ffbee9.png', level: '14'},
+    {id: '竹', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118707098377781388/bf917dca342a26c89b0170691937bb26edbbed3f719b243a0ce0fa894ddb4912.png', level: '14'},
+    {id: 'BLACK SWAN', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118725982250086491/e5504fd9ea2267b2cf0aab09e448ef57450e9eb9d53b2ff0e1aecbf36fd147dd.png', level: '14'},
+    {id: '星詠みとデスペラード', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726003158683678/ed8138a80a7ef034539482ffbf15d3c0455898974bbfc723a3483a89986aa09a.png', level: '14'},
+    {id: 'Alcyone', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726027812810772/c6a90df6ab49d2d9c03777cad95d64e07361d8ff408466642b16e0974261f9c6.png', level: '14'},
+    {id: 'Raven Emperor', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726040303456367/9808a875f51681af62fd3685fe151641fae4720dd8cd4bfe71470f51ee53260f.png', level: '14'},
+    {id: 'Yorugao', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726055826563144/b956d53d3c0f34fb42573505cd8ca962fa882e395473080f2f095d5c8c8ea765.png', level: '14'},
+    {id: 'U&iVERSE -銀河鸞翔-', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726076554817536/bac06802ab44b23ac597298651ef3551f026564a65c6acc855cc5f24174ec9bc.png', level: '14'},
+    {id: 'Destr0yer', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726094011514971/039d7dd5b8db61bbee5896526ac06faa004772fd06ae489304ca71b71ae3f44a.png', level: '14'},
+    {id: 'Falsum Atlantis.', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726138169139302/cb129ca3b7051d4289839528f4005012ad1de565ed68baa7641508c15a627062.png', level: '14'},
+    {id: 'Trick tear', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726144393494558/70b83fc113aa3f30894a0febc529995fa56f63e493f93ad0055bd1efb3bb787e.png', level: '14'},
+    {id: 'スピカの天秤', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726165474066503/1d56b7818aa2efc495b1757c9e19133ab2ae5b4e936786cfeebbf729dabef79e.png', level: '14'},
+    {id: 'Halcyon', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726185610915960/6545b0299e65ee70636dea0bbbe83d65c587221dfca6712f177926154b264fcb.png', level: '14'},
+    {id: 'Strive against fate', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726204166508555/4bdcc9a5748f22c22339484d623579d3a00b50623fb8858cde3ff3b576b0f449.png', level: '14'},
+    {id: 'Good bye, Merry-Go-Round.', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726225087713301/4215613aad4f3b3cf565719eed2cbc2fd8217480d7a24ac810c86874bb2cceef.png', level: '14'},
+    {id: 'otorii INNOVATED -[i]3-', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726253504110682/5c8013230cc9233adc95f112da9f4381085898dc33034ce9dca8b01d081581ff.png', level: '14'},
+    {id: 'BLUE ZONE', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726273884233748/79445040703621f31dba23e6042178f599c77083d127cebb197c7d84eb18d9e7.png', level: '14'},
+    {id: 'Loves Theme of BADASS', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726294562160802/4e342767a7e8d71ad856ea1dec834b3e9ed4e8addb0eb5eb635b08b310a13075.png', level: '14'},
+    {id: 'Mjölnir', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726311968514109/f6ac558d0e2ae1793829f8157fe0d415022118a861d629e7ac12d5734292681c.png', level: '14'},
+    {id: 'HECATONCHEIR', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726355782225980/a0387ebdea91588f18c1ea37a6143c766ae3ac49c80dabcf8bda2590648e07e0.png', level: '14'},
+    {id: 'HAGAKIRI', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726376770502796/d9c1803eb1a7ff0e947a327306d3e29486ba51782055f92e1720b6c763b016fc.png', level: '14'},
+    {id: 'N3V3R G3T OV3R', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726397809143958/4ad18e055dba18cd77eb4920f360604ccdde5b2f2c964b69162de7fa3b0baa97.png', level: '14'},
+    {id: 'Swift Swing', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726414603141130/623e24aea4cc64001e2417b9f43adde6aa3097be89a871509e55249702efeb80.png', level: '14'},
+    {id: 'Sage', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726437453713438/00e952a6be2d44a35828287fc402f316ec7c0af5046e857cf1f3b23025332417.png', level: '14'},
+    {id: 'Metamorphosism', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726459356368986/e0ba440cc5576114c908ef379e21f9a43dc136cbafbaf91e998340d5d42eb2a7.png', level: '14'},
+    {id: 'エータ・ベータ・イータ', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726478620799047/4aff8b8f7c1b17804e954601c952f07a3e001f0170259d6dfe3a5cf6e85453d0.png', level: '14'},
+    {id: 'Tricolor⁂circuS', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726637958209576/821e1c28b75374ae619564017b8d94099ebf7d91f54421c9667b289b89ed02f6.png', level: '14'},
+    {id: '[X]', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726655402328084/c5abf5c7c5a6f683f43f7b599826bd60ff3d718e215f8ea96ba9373c6ac6ceb7.png', level: '14'},
+    {id: '蜘蛛の糸', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726679326634085/3b0db48212e6690748900b9d4b3ec8e9af6f84995602ec6e4b4df307860bc42c.png', level: '14'},
+    {id: 'Dont Fight The Music', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726700851810334/43e274dd8f15a897ab59067b6b738233b8897e0b8d56b4d94cd4f81c9924d656.png', level: '14'},
+    {id: '田中', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726727506604162/cf170e8dfbeccce0f373c874a7b3bc5910444e501a4350f67f8462c3efc212d2.png', level: '14'},
+    {id: 'mystique as iris', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726742710960158/b3faaa0cf8d4a736db0ab61a9d1f1bf3d8766be97748ddfcdf6d5eed372d0d22.png', level: '14'},
+    {id: 'SUPER AMBULANCE', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726760100528158/dc0d6733393a2701699b7ab61af373f361a12ed5e819d96385214dfc461685f9.png', level: '14'},
+    {id: 'Rising on the horizon', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726775011299438/ce1aad3c87f1a9a7ff1c5f00c2bb9ec6ed1f2aa07aa503959bc1e8c6176ebbc5.png', level: '14'},
+    {id: '#狂った民族２ PRAVARGYAZOOQA', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726791121616906/49ca54d97c6ab8775a109ae0fe0a684fc9f562c3bdf1cfe2dbbbee16a45637ef.png', level: '14'},
+    {id: 'VSpook!', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726807311618058/935bacbf2bdb863b80bb9d09fe238ddcabca732d4c1f059edac5658c8eb1af45.png', level: '14'},
+    {id: 'エナドリおいしいソング', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726851058216971/3319046005c6aa1d1073bd714d19a8f341716ba6b4f63aa4c05faa8f6d294abc.png', level: '14'},
+    {id: '電光石火', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726872914722866/232416388033cec9f28cdd9cc4f94965593dcf809f54241555edf5e5a8859a23.png', level: '14'},
+    {id: 'Hainuwele', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726947581726841/0e482d3fe98d45755363a909270688f5e2ebd96ae780fd2861531958fb42d6ed.png', level: '14'},
+    {id: '"411Ψ892"', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118726976463708180/890070403457183caf1a5ef11fe54142ee7a6760507c23241445099eb9672fc7.png', level: '14'},
+    {id: 'Aegleseeker', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118727005102415994/0fee1f54c5613514d93e215e37a737be3fffb1e47fd04bbd4ca562595eddc4e3.png', level: '14'},
+    {id: '最強STRONGER', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118727069405298718/e346593c2015e71c3bc9ed03946c0cae997d16903f5cec626903344f931fd5aa.png', level: '14'},
+    {id: 'Trrricksters!!', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118727127441866792/af5aa2985ef533cc430c6ed4ca9f0fd040dfb4f53650684b65b12c8f56e4fba1.png', level: '14'},
+    {id: 'Comet Panto Men!', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118727153576583298/3c8ce29fbf6af030ed10d0e1a3eef81b76832b8dc9516f28f2df55d7a6bb9196.png', level: '14'},
+    {id: 'ツムギボシ', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118727178830483576/399205e2297d6ee6753f0e1ac8e7f15891f4eb93158c9ca4a9d851f963ac102e.png', level: '14'},
+    {id: 'FLUFFY FLASH', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118727200099815505/c7d904ebcd1c2c78a3e33bf177889712fc33c39ce5719ddedd1aef23bcbd518c.png', level: '14'},
+    {id: '僕の和風本当上手', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118727216159797348/74c8525b9d8c0278875c913338e4f7c4ec2174f9451ea3aca7ad479ffe10b15a.png', level: '14'},
+    {id: 'Cthugha', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118727253874987119/470282e7ffb75c309d3ccf64987437d1856cafaefadf6f11402569c2a6b955cb.png', level: '14'},
+    {id: 'BULK UP GAME EXCLUSIVE EDIT', image: 'https://cdn.discordapp.com/attachments/1118311365464039465/1118727277446971392/8fc67a95ea09b58cabdfdc1476cca942c00915b10d6ada5e82a85fdff4e4bbf8.png', level: '14'},
+
+
+
+];
+
+
+var myPicker = new picker.Picker({
+    items: items,
+    localStorageKey: 'picker-state',
+    defaultSettings: {
+        minBatchSize: 2,
+        maxBatchSize: 14,
+        excludedLevels: ['13+', '14', '14+', '15']
+    },
+    shouldIncludeItem: function(item, settings) {
+        if (settings.excludedLevels.indexOf(item.level) !== -1) {
+            return false;
+        }
+        return true;
+    }
+});
+
+var pickerUI = new PickerUI(myPicker, {
+    elements: {
+        pick: "#pick",
+        pass: "#pass",
+        undo: "#undo",
+        redo: "#redo",
+        evaluating: "#evaluating",
+        favorites: "#favorites",
+        reset: "#reset",
+        settings: {
+            excludedLevels: '.levels'
+        }
+    }
+});
+
+
+
+
+pickerUI.initialize();
+
+/* Sortable favorites - you can safely remove this, and the Sortable.min.js script, if you don't want to be able to sort your favorite list. */
+var sortable = new Sortable(pickerUI.elem.favorites.get(0), {
+    draggable: '.item',
+    animation: 100,
+    onStart: function() {
+        pickerUI.elem.favorites.addClass("sorting");
+    },
+    onEnd: function() {
+        pickerUI.elem.favorites.removeClass("sorting");
+    },
+    onUpdate: function() {
+        myPicker.setFavorites(pickerUI.elem.favorites.children().map(function() {
+            return pickerUI.getItem(this);
+        }).get());
+        pickerUI.update(true);
+    }
+});
+/* End sortable favorites */
+</script>
+</body>
+</html>
